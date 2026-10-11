@@ -1,0 +1,161 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+using namespace std;
+
+class Directory
+{
+    string companyName;
+    string owner;
+    string phone;
+    string address;
+    string activity;
+
+public:
+    void Input()
+    {
+        cout << "Company name: ";
+        getline(cin, companyName);
+        cout << "Owner: ";
+        getline(cin, owner);
+        cout << "Phone: ";
+        getline(cin, phone);
+        cout << "Address: ";
+        getline(cin, address);
+        cout << "Activity: ";
+        getline(cin, activity);
+    }
+
+    void Show() const
+    {
+        cout << "Company name: " << companyName << endl;
+        cout << "Owner: " << owner << endl;
+        cout << "Phone: " << phone << endl;
+        cout << "Address: " << address << endl;
+        cout << "Activity: " << activity << endl;
+        cout << "--------------------" << endl;
+    }
+
+    bool Load(ifstream& file)
+    {
+        return bool(getline(file, companyName) &&
+                    getline(file, owner) &&
+                    getline(file, phone) &&
+                    getline(file, address) &&
+                    getline(file, activity));
+    }
+
+    bool Save(const string& fileName) const
+    {
+        ofstream file(fileName, ios::app);
+        if (!file)
+            return false;
+
+        file << companyName << '\n'
+             << owner << '\n'
+             << phone << '\n'
+             << address << '\n'
+             << activity << '\n';
+
+        file.close();
+        return !file.fail();
+    }
+
+    bool Matches(const string& field, const string& text) const
+    {
+        if (field == "1")
+            return companyName.find(text) != string::npos;
+        if (field == "2")
+            return owner.find(text) != string::npos;
+        if (field == "3")
+            return phone.find(text) != string::npos;
+        if (field == "4")
+            return activity.find(text) != string::npos;
+        return false;
+    }
+};
+
+int main()
+{
+    const string fileName = "directory.txt";
+    Directory records[100];
+    int count = 0;
+    ifstream file(fileName);
+    Directory record;
+
+    while (count < 100 && record.Load(file))
+        records[count++] = record;
+    file.close();
+
+    string choice;
+
+    while (true)
+    {
+        cout << "\n1. Search by company name" << endl;
+        cout << "2. Search by owner" << endl;
+        cout << "3. Search by phone" << endl;
+        cout << "4. Search by activity" << endl;
+        cout << "5. Show all records" << endl;
+        cout << "6. Add a record" << endl;
+        cout << "0. Exit" << endl;
+        cout << "Your choice: ";
+
+        if (!getline(cin, choice) || choice == "0")
+            break;
+
+        if (choice == "6")
+        {
+            if (count == 100)
+            {
+                cout << "Directory is full." << endl;
+                continue;
+            }
+
+            Directory newRecord;
+            newRecord.Input();
+            if (!cin)
+                break;
+
+            if (newRecord.Save(fileName))
+            {
+                records[count++] = newRecord;
+                cout << "Record added and saved." << endl;
+            }
+            else
+                cout << "Cannot save the record." << endl;
+        }
+        else if (choice == "5")
+        {
+            if (count == 0)
+                cout << "Directory is empty." << endl;
+
+            for (int i = 0; i < count; i++)
+                records[i].Show();
+        }
+        else if (choice == "1" || choice == "2" ||
+                 choice == "3" || choice == "4")
+        {
+            string text;
+            cout << "Search text: ";
+            if (!getline(cin, text))
+                break;
+
+            bool found = false;
+            for (int i = 0; i < count; i++)
+            {
+                if (records[i].Matches(choice, text))
+                {
+                    records[i].Show();
+                    found = true;
+                }
+            }
+
+            if (!found)
+                cout << "No records found." << endl;
+        }
+        else
+            cout << "Invalid choice." << endl;
+    }
+
+    return 0;
+}
